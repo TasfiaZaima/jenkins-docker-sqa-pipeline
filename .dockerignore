@@ -1,0 +1,8 @@
+.git
+.agents
+.codex
+jenkins_home
+node_modules
+dist
+build
+*.log
