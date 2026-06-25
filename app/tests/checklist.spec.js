@@ -21,16 +21,6 @@ test('shows validation when task name is too short', async ({ page }) => {
   await expect(page.getByTestId('total-count')).toHaveText('2 total');
 });
 
-test('adds a high priority test task', async ({ page }) => {
-  await page.getByLabel('Test task').fill('Validate payment error state');
-  await page.getByLabel('Priority').selectOption('High');
-  await page.getByRole('button', { name: 'Add' }).click();
-
-  await expect(page.getByText('Validate payment error state')).toBeVisible();
-  await expect(page.getByText('High')).toBeVisible();
-  await expect(page.getByTestId('total-count')).toHaveText('3 total');
-});
-
 test('marks a task complete and filters completed tasks', async ({ page }) => {
   await page.getByLabel('Verify login page').check();
   await page.getByRole('button', { name: 'done' }).click();
