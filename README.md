@@ -143,7 +143,7 @@ docker exec -u root jenkins-container chown jenkins:jenkins /var/jenkins_home/de
 Copy the public key into the Ubuntu deployment container:
 
 ```bash
-docker exec jenkins-container cat /var/jenkins_home/deploy_key.pub | docker exec -i ubuntu-ssh-container sh -c "mkdir -p /home/deploy/.ssh && cat >> /home/deploy/.ssh/authorized_keys"
+docker exec jenkins-container cat /var/jenkins_home/deploy_key.pub | docker exec -i ubuntu-ssh-container sh -c "mkdir -p /home/deploy/.ssh && cat > /home/deploy/.ssh/authorized_keys"
 docker exec ubuntu-ssh-container chown -R deploy:deploy /home/deploy/.ssh
 docker exec ubuntu-ssh-container chmod 700 /home/deploy/.ssh
 docker exec ubuntu-ssh-container chmod 600 /home/deploy/.ssh/authorized_keys
@@ -201,7 +201,7 @@ Not required for this local public-repo demo:
 
 Optional:
 
-- If the GitHub repo is private, create a GitHub credential in Jenkins and pass its ID as `GIT_CREDENTIALS_ID`.
+- If the GitHub repo is private, add a Jenkins Git credential and update the `Checkout` stage in `Jenkinsfile` to use that credential ID.
 - If you later push Docker images to Docker Hub, create a Docker registry credential.
 
 ## Create The Jenkins Pipeline Job
@@ -228,7 +228,6 @@ Use:
 ```text
 REPO_URL = https://github.com/TasfiaZaima/jenkins-docker-sqa-pipeline.git
 REPO_BRANCH = main
-GIT_CREDENTIALS_ID = leave blank for public repo
 APP_SUBDIRECTORY = app
 ```
 
@@ -245,6 +244,8 @@ The build should run these stages:
 5. `Build React App`: runs `npm run build`.
 6. `Create Docker Image`: creates an Nginx image containing the built React app.
 7. `Deploy Over SSH`: copies the Docker image to the Ubuntu server and runs it.
+
+The deployment commands use `sudo docker` on the Ubuntu container because the `deploy` user has passwordless sudo access but may not have direct permission to use `/var/run/docker.sock`.
 
 ## View Test Reports
 
@@ -343,3 +344,33 @@ docker compose down -v
 ```
 
 Use `down -v` only when you want to reset Jenkins completely.
+
+## Clean Up Docker Space
+
+Each successful pipeline build creates a tagged app image such as `react-demo:8` and saves a tar file such as `react-demo-8.tar` during deployment. Docker images and build cache can take disk space over time.
+
+Check Docker disk usage:
+
+```bash
+docker system df
+```
+
+Remove unused Docker images, containers, networks, and build cache:
+
+```bash
+docker system prune -a
+```
+
+Remove old app image tags manually if needed:
+
+```bash
+docker rmi react-demo:6 react-demo:7
+```
+
+Be careful with volumes:
+
+```bash
+docker system prune -a --volumes
+```
+
+This can remove unused volumes. If the Jenkins volume is removed, Jenkins jobs, credentials, and build history can be lost.
