@@ -38,7 +38,6 @@ The Playwright suite checks:
 - The page loads and shows the correct heading.
 - Seeded checklist data appears.
 - Short task names show validation error.
-- A high-priority task can be added.
 - A task can be marked complete.
 - Completed-task filtering works.
 - A task can be removed.
