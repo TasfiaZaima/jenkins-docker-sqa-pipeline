@@ -16,18 +16,13 @@ pipeline {
     parameters {
         string(
             name: 'REPO_URL',
-            defaultValue: 'https://github.com/TasfiaZaima/jenkins-docker-sqa-pipeline.git',
+            defaultValue: '',
             description: 'GitHub repository URL. Leave blank when this Jenkinsfile is loaded from the same repository.'
         )
         string(
             name: 'REPO_BRANCH',
             defaultValue: 'main',
             description: 'Branch to deploy'
-        )
-        string(
-            name: 'GIT_CREDENTIALS_ID',
-            defaultValue: '',
-            description: 'Optional Jenkins credential ID for a private GitHub repository.'
         )
         string(
             name: 'APP_SUBDIRECTORY',
@@ -41,11 +36,7 @@ pipeline {
             steps {
                 script {
                     if (params.REPO_URL?.trim()) {
-                        if (params.GIT_CREDENTIALS_ID?.trim()) {
-                            git branch: params.REPO_BRANCH, credentialsId: params.GIT_CREDENTIALS_ID, url: params.REPO_URL
-                        } else {
-                            git branch: params.REPO_BRANCH, url: params.REPO_URL
-                        }
+                        git branch: params.REPO_BRANCH, url: params.REPO_URL
                     } else {
                         checkout scm
                     }
@@ -85,14 +76,7 @@ pipeline {
             post {
                 always {
                     junit allowEmptyResults: true, testResults: "${env.APP_DIR}/test-results/junit.xml"
-                    publishHTML(target: [
-                        allowMissing: true,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
-                        reportDir: "${env.APP_DIR}/playwright-report",
-                        reportFiles: 'index.html',
-                        reportName: 'Playwright Report'
-                    ])
+                    publishHTML allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: "${env.APP_DIR}/playwright-report", reportFiles: 'index.html', reportName: 'Playwright Report'
                 }
             }
         }
@@ -130,9 +114,9 @@ CMD ["nginx", "-g", "daemon off;"]
                             scp -P ${DEPLOY_PORT} ${IMAGE_NAME}-${IMAGE_TAG}.tar ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_DIR}/
                             ssh -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} "
                               set -e
-                              docker load -i ${DEPLOY_DIR}/${IMAGE_NAME}-${IMAGE_TAG}.tar
-                              docker rm -f ${APP_NAME} || true
-                              docker run -d --name ${APP_NAME} -p 3000:80 ${IMAGE_NAME}:${IMAGE_TAG}
+                              sudo docker load -i ${DEPLOY_DIR}/${IMAGE_NAME}-${IMAGE_TAG}.tar
+                              sudo docker rm -f ${APP_NAME} || true
+                              sudo docker run -d --name ${APP_NAME} -p 3000:80 ${IMAGE_NAME}:${IMAGE_TAG}
                             "
                         '''
                     }
